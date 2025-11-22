@@ -8,6 +8,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import MessageStatus from './MessageStatus';
+
 export interface MessageBubbleProps {
   id: string;
   content: string;
@@ -17,6 +19,7 @@ export interface MessageBubbleProps {
   createdAt: string;
   mediaUrl?: string | null;
   replyToId?: string | null;
+  animatedStatus?: boolean;
 }
 
 const MessageBubble = memo(function MessageBubble({
@@ -25,6 +28,7 @@ const MessageBubble = memo(function MessageBubble({
   currentUserId,
   status,
   createdAt,
+  animatedStatus = true,
 }: MessageBubbleProps) {
   const isSent = senderId === currentUserId;
   const scale = useSharedValue(1);
@@ -33,16 +37,8 @@ const MessageBubble = memo(function MessageBubble({
     transform: [{ scale: withSpring(scale.value, { damping: 15 }) }],
   }));
 
-  const getStatusColor = (msgStatus: string) => {
-    switch (msgStatus) {
-      case 'read':
-        return '#22c55e';
-      case 'delivered':
-        return '#3b82f6';
-      default:
-        return '#6b7280';
-    }
-  };
+  const statusType =
+    status === 'sent' || status === 'delivered' || status === 'read' ? status : 'sent';
 
   return (
     <Animated.View
@@ -58,12 +54,38 @@ const MessageBubble = memo(function MessageBubble({
         <View style={styles.footer}>
           <Text style={styles.time}>{format(new Date(createdAt), 'HH:mm')}</Text>
           {isSent && (
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(status) }]} />
+            <View style={styles.statusContainer}>
+              {animatedStatus ? (
+                <MessageStatus status={statusType} size={16} />
+              ) : (
+                <SimpleStatusDot status={statusType} />
+              )}
+            </View>
           )}
         </View>
       </Animated.View>
     </Animated.View>
   );
+});
+
+// Simple fallback status dot for performance
+const SimpleStatusDot = memo(function SimpleStatusDot({
+  status,
+}: {
+  status: 'sent' | 'delivered' | 'read';
+}) {
+  const getStatusColor = () => {
+    switch (status) {
+      case 'read':
+        return '#22c55e';
+      case 'delivered':
+        return '#3b82f6';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  return <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />;
 });
 
 const styles = StyleSheet.create({
@@ -110,11 +132,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.6)',
   },
+  statusContainer: {
+    marginLeft: 4,
+    width: 16,
+    height: 16,
+  },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginLeft: 4,
   },
 });
 
