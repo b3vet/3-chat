@@ -1,14 +1,13 @@
-import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TamaguiProvider } from 'tamagui';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useAtom } from 'jotai';
-
-import { tamaguiConfig } from '@/themes/tamagui/tamagui.config';
-import { authTokenAtom } from '@/stores/userStore';
 import { phoenixService } from '@/services/phoenix';
+import { authTokenAtom } from '@/stores/userStore';
+import { tamaguiConfig } from '@/themes/tamagui/tamagui.config';
 
 const queryClient = new QueryClient({
   defaultOptions: {

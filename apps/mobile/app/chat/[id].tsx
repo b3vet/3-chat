@@ -1,39 +1,56 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { format } from 'date-fns';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { ArrowLeft, Mic, Paperclip, Send } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { format } from 'date-fns';
-import { ArrowLeft, Send, Paperclip, Mic } from 'lucide-react-native';
-
-import { userIdAtom } from '@/stores/userStore';
-import { chatMessagesAtom, activeChatIdAtom, addMessageAtom, setTypingUserAtom, typingUsersAtom } from '@/stores/chatStore';
-import { phoenixService } from '@/services/phoenix';
 import { api, type Message } from '@/services/api';
+import { phoenixService } from '@/services/phoenix';
+import {
+  activeChatIdAtom,
+  addMessageAtom,
+  chatMessagesAtom,
+  setTypingUserAtom,
+  typingUsersAtom,
+} from '@/stores/chatStore';
+import { userIdAtom } from '@/stores/userStore';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
 
   const userId = useAtomValue(userIdAtom);
-  const [activeChatId, setActiveChatId] = useAtom(activeChatIdAtom);
+  const [_activeChatId, setActiveChatId] = useAtom(activeChatIdAtom);
   const messages = useAtomValue(chatMessagesAtom);
   const addMessage = useSetAtom(addMessageAtom);
   const typingUsers = useAtomValue(typingUsersAtom);
   const setTypingUser = useSetAtom(setTypingUserAtom);
 
   const chatTyping = typingUsers.get(id) || [];
+
+  const loadMessages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const _response = await api.getMessages(id);
+      // Load messages into store
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     setActiveChatId(id);
@@ -43,13 +60,14 @@ export default function ChatScreen() {
     phoenixService.joinChatChannel(id);
 
     // Listen for new messages
-    const unsubMessage = phoenixService.onMessage('message:new', (payload) => {
-      addMessage({ chatId: id, message: payload });
+    const unsubMessage = phoenixService.onMessage('message:new', (payload: unknown) => {
+      addMessage({ chatId: id, message: payload as Message });
     });
 
     // Listen for typing
-    const unsubTyping = phoenixService.onMessage('typing:update', (payload) => {
-      setTypingUser({ chatId: id, userId: payload.user_id, isTyping: payload.typing });
+    const unsubTyping = phoenixService.onMessage('typing:update', (payload: unknown) => {
+      const data = payload as { user_id: string; typing: boolean };
+      setTypingUser({ chatId: id, userId: data.user_id, isTyping: data.typing });
     });
 
     return () => {
@@ -57,19 +75,7 @@ export default function ChatScreen() {
       unsubTyping();
       phoenixService.leaveChannel(`chat:${id}`);
     };
-  }, [id]);
-
-  const loadMessages = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.getMessages(id);
-      // Load messages into store
-    } catch (error) {
-      console.error('Failed to load messages:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [id, addMessage, setActiveChatId, setTypingUser, loadMessages]);
 
   const handleSend = useCallback(() => {
     if (!message.trim()) return;
@@ -88,7 +94,7 @@ export default function ChatScreen() {
         phoenixService.sendTypingStop(id);
       }
     },
-    [id]
+    [id],
   );
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -100,9 +106,7 @@ export default function ChatScreen() {
           {item.content}
         </Text>
         <View style={styles.messageFooter}>
-          <Text style={styles.messageTime}>
-            {format(new Date(item.created_at), 'HH:mm')}
-          </Text>
+          <Text style={styles.messageTime}>{format(new Date(item.created_at), 'HH:mm')}</Text>
           {isSent && (
             <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
           )}
@@ -130,9 +134,7 @@ export default function ChatScreen() {
         </Pressable>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>Chat</Text>
-          {chatTyping.length > 0 && (
-            <Text style={styles.typingIndicator}>typing...</Text>
-          )}
+          {chatTyping.length > 0 && <Text style={styles.typingIndicator}>typing...</Text>}
         </View>
       </View>
 

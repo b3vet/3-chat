@@ -1,19 +1,16 @@
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAtomValue } from 'jotai';
 import { format } from 'date-fns';
+import { router } from 'expo-router';
+import { useAtomValue } from 'jotai';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { activeChatsAtom } from '@/stores/chatStore';
+import { activeChatsAtom, type Chat } from '@/stores/chatStore';
 
 export default function ChatsScreen() {
   const chats = useAtomValue(activeChatsAtom);
 
-  const renderChat = ({ item }: { item: any }) => (
-    <Pressable
-      style={styles.chatItem}
-      onPress={() => router.push(`/chat/${item.id}`)}
-    >
+  const renderChat = ({ item }: { item: Chat }) => (
+    <Pressable style={styles.chatItem} onPress={() => router.push(`/chat/${item.id}`)}>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{item.name?.[0]?.toUpperCase() || '?'}</Text>
       </View>

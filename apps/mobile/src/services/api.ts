@@ -1,5 +1,5 @@
-import ky from 'ky';
 import * as SecureStore from 'expo-secure-store';
+import ky from 'ky';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -69,7 +69,9 @@ export const api = {
     display_name: string;
     password: string;
   }) {
-    return apiClient.post('auth/register', { json: data }).json<{ message: string; user_id: string }>();
+    return apiClient
+      .post('auth/register', { json: data })
+      .json<{ message: string; user_id: string }>();
   },
 
   async verifyOTP(phone_number: string, otp: string): Promise<AuthResponse> {
@@ -80,7 +82,9 @@ export const api = {
     return apiClient.post('auth/login', { json: { username, password } }).json();
   },
 
-  async refreshToken(refresh_token: string): Promise<{ access_token: string; refresh_token: string }> {
+  async refreshToken(
+    refresh_token: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
     return apiClient.post('auth/refresh', { json: { refresh_token } }).json();
   },
 
@@ -111,7 +115,10 @@ export const api = {
   },
 
   // Messages
-  async getMessages(chatId: string, opts?: { limit?: number; offset?: number }): Promise<{ messages: Message[] }> {
+  async getMessages(
+    chatId: string,
+    opts?: { limit?: number; offset?: number },
+  ): Promise<{ messages: Message[] }> {
     return apiClient.get(`messages/${chatId}`, { searchParams: opts as any }).json();
   },
 
@@ -163,8 +170,76 @@ export const api = {
           'Content-Type': 'multipart/form-data',
         },
       })
-      .json<{ url: string; filename: string; content_type: string }>();
+      .json<MediaUploadResponse>();
+  },
+
+  async uploadVoiceNote(file: { uri: string; name: string; type: string }, duration?: number) {
+    const formData = new FormData();
+    formData.append('file', file as any);
+    if (duration) {
+      formData.append('duration', duration.toString());
+    }
+
+    return apiClient
+      .post('media/voice', {
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .json<VoiceNoteUploadResponse>();
+  },
+
+  async getMedia(id: string) {
+    return apiClient.get(`media/${id}`).json<MediaInfo>();
+  },
+
+  async deleteMedia(id: string) {
+    return apiClient.delete(`media/${id}`).json();
+  },
+
+  async getMediaRateLimit() {
+    return apiClient
+      .get('media/rate-limit')
+      .json<{ remaining: number; limit: number; window: string }>();
   },
 };
+
+export interface MediaUploadResponse {
+  id: string;
+  url: string;
+  thumb_url: string | null;
+  filename: string;
+  content_type: string;
+  file_type: 'image' | 'video' | 'audio' | 'document';
+}
+
+export interface VoiceNoteUploadResponse {
+  id: string;
+  url: string;
+  filename: string;
+  duration: number | null;
+  file_type: 'voice_note';
+}
+
+export interface MediaInfo {
+  id: string;
+  url: string;
+  thumb_url: string | null;
+  filename: string;
+  content_type: string;
+  file_type: string;
+  duration: number | null;
+  uploaded_at: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  icon_url: string | null;
+  creator_id: string;
+  created_at: string;
+}
 
 export default api;

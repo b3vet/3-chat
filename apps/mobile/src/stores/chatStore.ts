@@ -44,40 +44,114 @@ export const chatMessagesAtom = atom((get) => {
 });
 
 // Add message to a chat
-export const addMessageAtom = atom(null, (get, set, { chatId, message }: { chatId: string; message: Message }) => {
-  const messages = new Map(get(messagesAtom));
-  const chatMessages = messages.get(chatId) || [];
-  messages.set(chatId, [...chatMessages, message]);
-  set(messagesAtom, messages);
-});
+export const addMessageAtom = atom(
+  null,
+  (get, set, { chatId, message }: { chatId: string; message: Message }) => {
+    const messages = new Map(get(messagesAtom));
+    const chatMessages = messages.get(chatId) || [];
+    messages.set(chatId, [...chatMessages, message]);
+    set(messagesAtom, messages);
+  },
+);
 
 // Update message status
 export const updateMessageStatusAtom = atom(
   null,
-  (get, set, { chatId, messageId, status }: { chatId: string; messageId: string; status: string }) => {
+  (
+    get,
+    set,
+    { chatId, messageId, status }: { chatId: string; messageId: string; status: string },
+  ) => {
     const messages = new Map(get(messagesAtom));
     const chatMessages = messages.get(chatId) || [];
     const updatedMessages = chatMessages.map((msg) =>
-      msg.id === messageId ? { ...msg, status } : msg
+      msg.id === messageId ? { ...msg, status } : msg,
     );
     messages.set(chatId, updatedMessages);
     set(messagesAtom, messages);
-  }
+  },
 );
 
 // Set typing user
 export const setTypingUserAtom = atom(
   null,
-  (get, set, { chatId, userId, isTyping }: { chatId: string; userId: string; isTyping: boolean }) => {
+  (
+    get,
+    set,
+    { chatId, userId, isTyping }: { chatId: string; userId: string; isTyping: boolean },
+  ) => {
     const typingUsers = new Map(get(typingUsersAtom));
     const chatTyping = typingUsers.get(chatId) || [];
 
     if (isTyping && !chatTyping.includes(userId)) {
       typingUsers.set(chatId, [...chatTyping, userId]);
     } else if (!isTyping) {
-      typingUsers.set(chatId, chatTyping.filter((id) => id !== userId));
+      typingUsers.set(
+        chatId,
+        chatTyping.filter((id) => id !== userId),
+      );
     }
 
     set(typingUsersAtom, typingUsers);
-  }
+  },
+);
+
+// Set user online status
+export const setUserOnlineAtom = atom(
+  null,
+  (get, set, { userId, isOnline }: { userId: string; isOnline: boolean }) => {
+    const onlineUsers = new Set(get(onlineUsersAtom));
+    if (isOnline) {
+      onlineUsers.add(userId);
+    } else {
+      onlineUsers.delete(userId);
+    }
+    set(onlineUsersAtom, onlineUsers);
+  },
+);
+
+// Add group
+export const addGroupAtom = atom(null, (get, set, group: Group) => {
+  const groups = get(groupsAtom);
+  set(groupsAtom, [...groups, group]);
+});
+
+// Update group
+export const updateGroupAtom = atom(
+  null,
+  (get, set, { groupId, updates }: { groupId: string; updates: Partial<Group> }) => {
+    const groups = get(groupsAtom);
+    const updatedGroups = groups.map((g) => (g.id === groupId ? { ...g, ...updates } : g));
+    set(groupsAtom, updatedGroups);
+  },
+);
+
+// Remove group
+export const removeGroupAtom = atom(null, (get, set, groupId: string) => {
+  const groups = get(groupsAtom);
+  set(
+    groupsAtom,
+    groups.filter((g) => g.id !== groupId),
+  );
+});
+
+// Clear chat messages
+export const clearChatMessagesAtom = atom(null, (get, set, chatId: string) => {
+  const messages = new Map(get(messagesAtom));
+  messages.delete(chatId);
+  set(messagesAtom, messages);
+});
+
+// Delete message
+export const deleteMessageAtom = atom(
+  null,
+  (get, set, { chatId, messageId }: { chatId: string; messageId: string }) => {
+    const messages = new Map(get(messagesAtom));
+    const chatMessages = messages.get(chatId) || [];
+    messages.set(
+      chatId,
+      chatMessages.filter((m) => m.id !== messageId),
+    );
+    set(messagesAtom, messages);
+  },
 );

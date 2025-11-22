@@ -1,6 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
 import { atom } from 'jotai';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import * as SecureStore from 'expo-secure-store';
 
 import type { User } from '@/services/api';
 

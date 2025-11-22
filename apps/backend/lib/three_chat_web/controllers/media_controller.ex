@@ -1,78 +1,145 @@
 defmodule ThreeChatWeb.MediaController do
   use ThreeChatWeb, :controller
 
-  @max_file_size 10 * 1024 * 1024
-  @allowed_types ~w(.jpg .jpeg .png .gif .webp .mp4 .mov .mp3 .wav .m4a .pdf .doc .docx .txt)
+  alias ThreeChat.Media
+  alias ThreeChat.RateLimiter
+
+  plug ThreeChatWeb.RateLimitPlug, type: :media_upload when action in [:upload, :upload_voice]
 
   def upload(conn, %{"file" => upload}) do
     user = Guardian.Plug.current_resource(conn)
 
-    with :ok <- validate_file(upload),
-         {:ok, path} <- store_file(upload, user.id) do
-      conn
-      |> put_status(:created)
-      |> json(%{
-        url: path,
-        filename: upload.filename,
-        content_type: upload.content_type
-      })
-    else
+    case Media.upload_attachment(upload, user.id) do
+      {:ok, media} ->
+        conn
+        |> put_status(:created)
+        |> json(%{
+          id: media.id,
+          url: media.url,
+          thumb_url: media.thumb_url,
+          filename: media.original_filename,
+          content_type: media.content_type,
+          file_type: media.file_type
+        })
+
       {:error, reason} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{error: reason})
+        |> json(%{error: format_error(reason)})
+    end
+  end
+
+  def upload_voice(conn, %{"file" => upload} = params) do
+    user = Guardian.Plug.current_resource(conn)
+    duration = params["duration"]
+
+    case Media.upload_voice_note(upload, user.id, duration) do
+      {:ok, media} ->
+        conn
+        |> put_status(:created)
+        |> json(%{
+          id: media.id,
+          url: media.url,
+          filename: media.original_filename,
+          duration: media.duration,
+          file_type: :voice_note
+        })
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: format_error(reason)})
     end
   end
 
   def show(conn, %{"id" => id}) do
-    uploads_path = Application.get_env(:three_chat, :uploads_path, "uploads")
-    file_path = Path.join(uploads_path, id)
+    case Media.get_media(id) do
+      {:ok, media} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          id: media.id,
+          url: media.url,
+          thumb_url: media.thumb_url,
+          filename: media.original_filename,
+          content_type: media.content_type,
+          file_type: media.file_type,
+          duration: media.duration,
+          uploaded_at: media.uploaded_at
+        })
 
-    if File.exists?(file_path) do
-      conn
-      |> put_resp_content_type(MIME.from_path(file_path))
-      |> send_file(200, file_path)
-    else
-      conn
-      |> put_status(:not_found)
-      |> json(%{error: "File not found"})
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Media not found"})
     end
   end
 
-  defp validate_file(%Plug.Upload{path: path, filename: filename}) do
-    ext = Path.extname(filename) |> String.downcase()
+  def download(conn, %{"id" => id}) do
+    case Media.get_media(id) do
+      {:ok, media} ->
+        uploads_path = Application.get_env(:three_chat, :uploads_path, "uploads")
+        file_path = Path.join(uploads_path, media.url || "")
 
-    with {:ok, %{size: size}} <- File.stat(path),
-         true <- size <= @max_file_size,
-         true <- ext in @allowed_types do
-      :ok
-    else
-      false -> {:error, "File too large or invalid type"}
-      {:error, _} -> {:error, "Could not read file"}
+        if File.exists?(file_path) do
+          conn
+          |> put_resp_content_type(media.content_type || "application/octet-stream")
+          |> put_resp_header(
+            "content-disposition",
+            "attachment; filename=\"#{media.original_filename}\""
+          )
+          |> send_file(200, file_path)
+        else
+          conn
+          |> put_status(:not_found)
+          |> json(%{error: "File not found"})
+        end
+
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Media not found"})
     end
   end
 
-  defp store_file(%Plug.Upload{path: src_path, filename: filename}, user_id) do
-    uploads_path = Application.get_env(:three_chat, :uploads_path, "uploads")
-    {{year, month, day}, _} = :calendar.local_time()
+  def delete(conn, %{"id" => id}) do
+    user = Guardian.Plug.current_resource(conn)
 
-    dir = Path.join([
-      uploads_path,
-      Integer.to_string(year),
-      String.pad_leading(Integer.to_string(month), 2, "0"),
-      String.pad_leading(Integer.to_string(day), 2, "0"),
-      user_id
-    ])
+    case Media.delete_media(id, user.id) do
+      :ok ->
+        conn
+        |> put_status(:ok)
+        |> json(%{message: "Media deleted"})
 
-    File.mkdir_p!(dir)
+      {:error, :unauthorized} ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "Not authorized to delete this media"})
 
-    ext = Path.extname(filename)
-    new_filename = UUID.uuid4() <> ext
-    dest_path = Path.join(dir, new_filename)
-
-    case File.cp(src_path, dest_path) do
-      :ok -> {:ok, String.replace(dest_path, uploads_path <> "/", "")}
-      error -> error
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Media not found"})
     end
   end
+
+  def rate_limit_status(conn, _params) do
+    user = Guardian.Plug.current_resource(conn)
+
+    case RateLimiter.remaining(:media_upload, user.id) do
+      {:ok, remaining} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{remaining: remaining, limit: 10, window: "1 minute"})
+
+      {:error, _} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{remaining: 0, limit: 10, window: "1 minute"})
+    end
+  end
+
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp format_error(_), do: "Upload failed"
 end

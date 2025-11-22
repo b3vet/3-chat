@@ -1,7 +1,11 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.7/schema.json",
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "formatter": {
     "enabled": true,
@@ -50,18 +54,10 @@
     }
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      "build",
-      ".turbo",
-      ".expo",
-      "*.min.js",
-      "vendor",
-      "apps/backend",
-      "_build",
-      "deps",
-      "*.lock"
+    "includes": [
+      "apps/mobile/**/*.ts",
+      "apps/mobile/**/*.tsx",
+      "packages/**/*.ts"
     ]
   }
 }

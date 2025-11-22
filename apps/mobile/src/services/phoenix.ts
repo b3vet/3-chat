@@ -1,4 +1,4 @@
-import { Socket, Channel, Presence } from 'phoenix';
+import { type Channel, Presence, Socket } from 'phoenix';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:4000/socket';
 
