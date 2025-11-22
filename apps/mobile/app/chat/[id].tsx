@@ -1,25 +1,16 @@
-import { format } from 'date-fns';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { ArrowLeft, Mic, Paperclip, Send } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { api, type Message } from '@/services/api';
+import { useCallback, useEffect, useState } from 'react';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+
+import { ChatHeader, type Message, MessageInput, MessageList } from '@/components/chat';
+import { api } from '@/services/api';
 import { phoenixService } from '@/services/phoenix';
 import {
   activeChatIdAtom,
   addMessageAtom,
   chatMessagesAtom,
+  clearChatMessagesAtom,
   setTypingUserAtom,
   typingUsersAtom,
 } from '@/stores/chatStore';
@@ -27,33 +18,46 @@ import { userIdAtom } from '@/stores/userStore';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const flatListRef = useRef<FlatList>(null);
+  const [chatTitle, setChatTitle] = useState('Chat');
 
   const userId = useAtomValue(userIdAtom);
   const [, setActiveChatId] = useAtom(activeChatIdAtom);
   const messages = useAtomValue(chatMessagesAtom);
   const addMessage = useSetAtom(addMessageAtom);
+  const clearMessages = useSetAtom(clearChatMessagesAtom);
   const typingUsers = useAtomValue(typingUsersAtom);
   const setTypingUser = useSetAtom(setTypingUserAtom);
 
   const chatTyping = typingUsers.get(id) || [];
+  const isTyping = chatTyping.length > 0;
+
+  // Extract other user ID from chat ID (format: userId1:userId2)
+  const getOtherUserId = useCallback(() => {
+    const parts = id.split(':');
+    return parts.find((part) => part !== userId) || parts[0];
+  }, [id, userId]);
 
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
+      clearMessages();
       const { messages: loadedMessages } = await api.getMessages(id);
-      // Messages are loaded into store via the response
       for (const msg of loadedMessages) {
         addMessage({ chatId: id, message: msg });
+      }
+
+      // Try to get chat info for title
+      const otherUserId = getOtherUserId();
+      if (otherUserId) {
+        setChatTitle(`${otherUserId.substring(0, 8)}...`);
       }
     } catch (error) {
       console.error('Failed to load messages:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [id, addMessage]);
+  }, [id, addMessage, clearMessages, getOtherUserId]);
 
   useEffect(() => {
     setActiveChatId(id);
@@ -70,119 +74,64 @@ export default function ChatScreen() {
     // Listen for typing
     const unsubTyping = phoenixService.onMessage('typing:update', (payload) => {
       const typingPayload = payload as { user_id: string; typing: boolean };
-      setTypingUser({ chatId: id, userId: typingPayload.user_id, isTyping: typingPayload.typing });
+      setTypingUser({
+        chatId: id,
+        userId: typingPayload.user_id,
+        isTyping: typingPayload.typing,
+      });
     });
 
     return () => {
       unsubMessage();
       unsubTyping();
       phoenixService.leaveChannel(`chat:${id}`);
+      setActiveChatId(null);
     };
   }, [id, addMessage, setTypingUser, setActiveChatId, loadMessages]);
 
-  const handleSend = useCallback(() => {
-    if (!message.trim()) return;
-
-    phoenixService.sendMessage(id, message.trim());
-    setMessage('');
-    phoenixService.sendTypingStop(id);
-  }, [id, message]);
-
-  const handleTextChange = useCallback(
-    (text: string) => {
-      setMessage(text);
-      if (text.length > 0) {
-        phoenixService.sendTypingStart(id);
-      } else {
-        phoenixService.sendTypingStop(id);
-      }
+  const handleSend = useCallback(
+    (content: string) => {
+      phoenixService.sendMessage(id, content);
     },
     [id],
   );
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isSent = item.sender_id === userId;
+  const handleTypingStart = useCallback(() => {
+    phoenixService.sendTypingStart(id);
+  }, [id]);
 
-    return (
-      <View style={[styles.messageBubble, isSent ? styles.sentBubble : styles.receivedBubble]}>
-        <Text style={[styles.messageText, isSent ? styles.sentText : styles.receivedText]}>
-          {item.content}
-        </Text>
-        <View style={styles.messageFooter}>
-          <Text style={styles.messageTime}>{format(new Date(item.created_at), 'HH:mm')}</Text>
-          {isSent && (
-            <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-          )}
-        </View>
-      </View>
-    );
-  };
+  const handleTypingStop = useCallback(() => {
+    phoenixService.sendTypingStop(id);
+  }, [id]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'read':
-        return '#22c55e';
-      case 'delivered':
-        return '#3b82f6';
-      default:
-        return '#6b7280';
-    }
-  };
+  const handleLoadMore = useCallback(async () => {
+    // TODO: Implement pagination for loading older messages
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#fff" />
-        </Pressable>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>Chat</Text>
-          {chatTyping.length > 0 && <Text style={styles.typingIndicator}>typing...</Text>}
-        </View>
-      </View>
+    <View style={styles.container}>
+      <ChatHeader title={chatTitle} isTyping={isTyping} />
 
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        {isLoading ? null : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.messageList}
-            inverted
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          />
-        )}
+        <MessageList
+          messages={messages}
+          currentUserId={userId}
+          onEndReached={handleLoadMore}
+          isLoading={isLoading}
+        />
 
-        <View style={styles.inputContainer}>
-          <Pressable style={styles.attachButton}>
-            <Paperclip size={22} color="#888" />
-          </Pressable>
-          <TextInput
-            style={styles.input}
-            placeholder="Message"
-            placeholderTextColor="#666"
-            value={message}
-            onChangeText={handleTextChange}
-            multiline
-            maxLength={4000}
-          />
-          {message.trim() ? (
-            <Pressable style={styles.sendButton} onPress={handleSend}>
-              <Send size={22} color="#fff" />
-            </Pressable>
-          ) : (
-            <Pressable style={styles.micButton}>
-              <Mic size={22} color="#888" />
-            </Pressable>
-          )}
-        </View>
+        <MessageInput
+          onSend={handleSend}
+          onTypingStart={handleTypingStart}
+          onTypingStop={handleTypingStop}
+          disabled={isLoading}
+        />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -191,108 +140,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  typingIndicator: {
-    fontSize: 12,
-    color: '#6366f1',
-    marginTop: 2,
-  },
   content: {
     flex: 1,
-  },
-  messageList: {
-    padding: 16,
-  },
-  messageBubble: {
-    maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
-  sentBubble: {
-    backgroundColor: '#6366f1',
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 4,
-  },
-  receivedBubble: {
-    backgroundColor: '#1a1a1a',
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 4,
-  },
-  messageText: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  sentText: {
-    color: '#fff',
-  },
-  receivedText: {
-    color: '#fff',
-  },
-  messageFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 4,
-  },
-  messageTime: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: 12,
-    paddingBottom: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-  },
-  attachButton: {
-    padding: 8,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginHorizontal: 8,
-    fontSize: 16,
-    color: '#fff',
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#6366f1',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  micButton: {
-    padding: 8,
   },
 });
