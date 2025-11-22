@@ -95,3 +95,55 @@ export const setTypingUserAtom = atom(
     set(typingUsersAtom, typingUsers);
   },
 );
+
+// Clear messages for active chat
+export const clearChatMessagesAtom = atom(null, (get, set) => {
+  const chatId = get(activeChatIdAtom);
+  if (chatId) {
+    const messages = new Map(get(messagesAtom));
+    messages.delete(chatId);
+    set(messagesAtom, messages);
+  }
+});
+
+// Delete a message
+export const deleteMessageAtom = atom(
+  null,
+  (get, set, { chatId, messageId }: { chatId: string; messageId: string }) => {
+    const messages = new Map(get(messagesAtom));
+    const chatMessages = messages.get(chatId) || [];
+    messages.set(
+      chatId,
+      chatMessages.filter((msg) => msg.id !== messageId),
+    );
+    set(messagesAtom, messages);
+  },
+);
+
+// Add or update a chat in the list
+export const upsertChatAtom = atom(null, (get, set, chat: Chat) => {
+  const chats = get(activeChatsAtom);
+  const existingIndex = chats.findIndex((c) => c.id === chat.id);
+
+  if (existingIndex >= 0) {
+    const updatedChats = [...chats];
+    updatedChats[existingIndex] = chat;
+    set(activeChatsAtom, updatedChats);
+  } else {
+    set(activeChatsAtom, [chat, ...chats]);
+  }
+});
+
+// Update online status
+export const setUserOnlineAtom = atom(
+  null,
+  (get, set, { userId, isOnline }: { userId: string; isOnline: boolean }) => {
+    const onlineUsers = new Set(get(onlineUsersAtom));
+    if (isOnline) {
+      onlineUsers.add(userId);
+    } else {
+      onlineUsers.delete(userId);
+    }
+    set(onlineUsersAtom, onlineUsers);
+  },
+);
