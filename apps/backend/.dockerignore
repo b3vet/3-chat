@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Elixir/Mix artifacts
+_build/
+deps/
+*.ez
+*.beam
+
+# Node artifacts (if any)
+node_modules/
+
+# Generated files
+erl_crash.dump
+
+# Static files we don't need
+*.md
+LICENSE*
+
+# Test files
+test/
+cover/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker*
+
+# Dev/test configs
+config/dev.exs
+config/test.exs

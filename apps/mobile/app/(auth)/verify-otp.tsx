@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSetAtom } from 'jotai';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { api } from '@/services/api';
 import { authTokenAtom, userAtom } from '@/stores/userStore';

@@ -1,15 +1,15 @@
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAtomValue } from 'jotai';
 import { Plus } from 'lucide-react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { groupsAtom } from '@/stores/chatStore';
+import { type Group, groupsAtom } from '@/stores/chatStore';
 
 export default function GroupsScreen() {
   const groups = useAtomValue(groupsAtom);
 
-  const renderGroup = ({ item }: { item: any }) => (
+  const renderGroup = ({ item }: { item: Group }) => (
     <Pressable style={styles.groupItem} onPress={() => router.push(`/group/${item.id}`)}>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{item.name?.[0]?.toUpperCase() || 'G'}</Text>

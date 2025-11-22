@@ -34,7 +34,7 @@ export const activeChatIdAtom = atom<string | null>(null);
 export const typingUsersAtom = atom<Map<string, string[]>>(new Map());
 
 // Online users
-export const onlineUsersAtom = atom<Set<string>>(new Set());
+export const onlineUsersAtom = atom<Set<string>>(new Set<string>());
 
 // Get messages for a specific chat
 export const chatMessagesAtom = atom((get) => {
@@ -44,40 +44,54 @@ export const chatMessagesAtom = atom((get) => {
 });
 
 // Add message to a chat
-export const addMessageAtom = atom(null, (get, set, { chatId, message }: { chatId: string; message: Message }) => {
-  const messages = new Map(get(messagesAtom));
-  const chatMessages = messages.get(chatId) || [];
-  messages.set(chatId, [...chatMessages, message]);
-  set(messagesAtom, messages);
-});
+export const addMessageAtom = atom(
+  null,
+  (get, set, { chatId, message }: { chatId: string; message: Message }) => {
+    const messages = new Map(get(messagesAtom));
+    const chatMessages = messages.get(chatId) || [];
+    messages.set(chatId, [...chatMessages, message]);
+    set(messagesAtom, messages);
+  },
+);
 
 // Update message status
 export const updateMessageStatusAtom = atom(
   null,
-  (get, set, { chatId, messageId, status }: { chatId: string; messageId: string; status: string }) => {
+  (
+    get,
+    set,
+    { chatId, messageId, status }: { chatId: string; messageId: string; status: string },
+  ) => {
     const messages = new Map(get(messagesAtom));
     const chatMessages = messages.get(chatId) || [];
     const updatedMessages = chatMessages.map((msg) =>
-      msg.id === messageId ? { ...msg, status } : msg
+      msg.id === messageId ? { ...msg, status } : msg,
     );
     messages.set(chatId, updatedMessages);
     set(messagesAtom, messages);
-  }
+  },
 );
 
 // Set typing user
 export const setTypingUserAtom = atom(
   null,
-  (get, set, { chatId, userId, isTyping }: { chatId: string; userId: string; isTyping: boolean }) => {
+  (
+    get,
+    set,
+    { chatId, userId, isTyping }: { chatId: string; userId: string; isTyping: boolean },
+  ) => {
     const typingUsers = new Map(get(typingUsersAtom));
     const chatTyping = typingUsers.get(chatId) || [];
 
     if (isTyping && !chatTyping.includes(userId)) {
       typingUsers.set(chatId, [...chatTyping, userId]);
     } else if (!isTyping) {
-      typingUsers.set(chatId, chatTyping.filter((id) => id !== userId));
+      typingUsers.set(
+        chatId,
+        chatTyping.filter((id) => id !== userId),
+      );
     }
 
     set(typingUsersAtom, typingUsers);
-  }
+  },
 );

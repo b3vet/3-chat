@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { atom } from 'jotai';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'cyberpunk' | 'aurora' | 'ocean' | 'space' | 'retrowave' | 'default';
 
@@ -22,7 +22,11 @@ const asyncStorage = createJSONStorage<any>(() => ({
 export const themeNameAtom = atomWithStorage<ThemeName>('themeName', 'default', asyncStorage);
 
 // Animations enabled
-export const animationsEnabledAtom = atomWithStorage<boolean>('animationsEnabled', true, asyncStorage);
+export const animationsEnabledAtom = atomWithStorage<boolean>(
+  'animationsEnabled',
+  true,
+  asyncStorage,
+);
 
 // Sound effects enabled
 export const soundEnabledAtom = atomWithStorage<boolean>('soundEnabled', true, asyncStorage);

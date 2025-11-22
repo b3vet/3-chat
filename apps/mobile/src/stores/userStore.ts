@@ -1,6 +1,6 @@
+import * as SecureStore from 'expo-secure-store';
 import { atom } from 'jotai';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import * as SecureStore from 'expo-secure-store';
 
 import type { User } from '@/services/api';
 
@@ -28,8 +28,8 @@ export const refreshTokenAtom = atomWithStorage<string>('refreshToken', '', secu
 export const userAtom = atom<User | null>(null);
 
 // Derived atom for authentication state
-export const isAuthenticatedAtom = atom((get) => {
-  const token = get(authTokenAtom);
+export const isAuthenticatedAtom = atom(async (get) => {
+  const token = await get(authTokenAtom);
   return Boolean(token && token.length > 0);
 });
 

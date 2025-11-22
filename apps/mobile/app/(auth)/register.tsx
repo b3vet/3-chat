@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import { Link, router } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, router } from 'expo-router';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '@/services/api';
@@ -28,7 +28,6 @@ export default function RegisterScreen() {
     control,
     handleSubmit,
     formState: { errors },
-    getValues,
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -143,7 +142,9 @@ export default function RegisterScreen() {
       />
 
       <Pressable style={styles.button} onPress={handleSubmit(onSubmit)} disabled={isLoading}>
-        <Text style={styles.buttonText}>{isLoading ? 'Creating account...' : 'Create Account'}</Text>
+        <Text style={styles.buttonText}>
+          {isLoading ? 'Creating account...' : 'Create Account'}
+        </Text>
       </Pressable>
 
       <Link href="/(auth)/login" asChild>
