@@ -1,9 +1,9 @@
-import { Socket, Channel, Presence } from 'phoenix';
+import { type Channel, Presence, Socket } from 'phoenix';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:4000/socket';
 
-type MessageHandler = (payload: any) => void;
-type PresenceHandler = (presences: any) => void;
+type MessageHandler = (payload: unknown) => void;
+type PresenceHandler = (presences: unknown[]) => void;
 
 class PhoenixService {
   private socket: Socket | null = null;
@@ -38,7 +38,9 @@ class PhoenixService {
   }
 
   disconnect(): void {
-    this.channels.forEach((channel) => channel.leave());
+    this.channels.forEach((channel) => {
+      channel.leave();
+    });
     this.channels.clear();
     this.socket?.disconnect();
     this.socket = null;
@@ -48,8 +50,9 @@ class PhoenixService {
     if (!this.socket) return null;
 
     const channelName = `user:${userId}`;
-    if (this.channels.has(channelName)) {
-      return this.channels.get(channelName)!;
+    const existingChannel = this.channels.get(channelName);
+    if (existingChannel) {
+      return existingChannel;
     }
 
     const channel = this.socket.channel(channelName, {});
@@ -75,8 +78,9 @@ class PhoenixService {
     if (!this.socket) return null;
 
     const channelName = `chat:${chatId}`;
-    if (this.channels.has(channelName)) {
-      return this.channels.get(channelName)!;
+    const existingChannel = this.channels.get(channelName);
+    if (existingChannel) {
+      return existingChannel;
     }
 
     const channel = this.socket.channel(channelName, {});
@@ -114,8 +118,9 @@ class PhoenixService {
     if (!this.socket) return null;
 
     const channelName = `group:${groupId}`;
-    if (this.channels.has(channelName)) {
-      return this.channels.get(channelName)!;
+    const existingChannel = this.channels.get(channelName);
+    if (existingChannel) {
+      return existingChannel;
     }
 
     const channel = this.socket.channel(channelName, {});
@@ -145,8 +150,9 @@ class PhoenixService {
     if (!this.socket) return null;
 
     const channelName = 'presence:lobby';
-    if (this.channels.has(channelName)) {
-      return this.channels.get(channelName)!;
+    const existingChannel = this.channels.get(channelName);
+    if (existingChannel) {
+      return existingChannel;
     }
 
     const channel = this.socket.channel(channelName, {});
@@ -154,7 +160,9 @@ class PhoenixService {
 
     this.presence.onSync(() => {
       const presences = this.presence?.list() || [];
-      this.presenceHandlers.forEach((handler) => handler(presences));
+      this.presenceHandlers.forEach((handler) => {
+        handler(presences);
+      });
     });
 
     channel
@@ -206,7 +214,7 @@ class PhoenixService {
     if (!this.messageHandlers.has(event)) {
       this.messageHandlers.set(event, []);
     }
-    this.messageHandlers.get(event)!.push(handler);
+    this.messageHandlers.get(event)?.push(handler);
 
     return () => {
       const handlers = this.messageHandlers.get(event) || [];
@@ -227,9 +235,11 @@ class PhoenixService {
     };
   }
 
-  private notifyHandlers(event: string, payload: any): void {
+  private notifyHandlers(event: string, payload: unknown): void {
     const handlers = this.messageHandlers.get(event) || [];
-    handlers.forEach((handler) => handler(payload));
+    handlers.forEach((handler) => {
+      handler(payload);
+    });
   }
 }
 

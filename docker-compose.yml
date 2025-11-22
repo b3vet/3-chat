@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - PHX_HOST=localhost
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-development_secret_key_base_that_is_at_least_64_bytes_long_for_phoenix}
+      - GUARDIAN_SECRET=${GUARDIAN_SECRET:-development_guardian_secret_key_that_is_at_least_32_bytes}
+      - SMS_PROVIDER=${SMS_PROVIDER:-console}
+      - TEXTBELT_API_KEY=${TEXTBELT_API_KEY:-}
+      - UPLOADS_PATH=/var/uploads
+    volumes:
+      - uploads_data:/var/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Development database (for future use when migrating from ETS)
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=three_chat
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-three_chat_dev}
+      - POSTGRES_DB=three_chat_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U three_chat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-db
+
+volumes:
+  uploads_data:
+  postgres_data:

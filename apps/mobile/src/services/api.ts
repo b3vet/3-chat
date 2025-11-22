@@ -1,5 +1,5 @@
-import ky from 'ky';
 import * as SecureStore from 'expo-secure-store';
+import ky from 'ky';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -69,7 +69,9 @@ export const api = {
     display_name: string;
     password: string;
   }) {
-    return apiClient.post('auth/register', { json: data }).json<{ message: string; user_id: string }>();
+    return apiClient
+      .post('auth/register', { json: data })
+      .json<{ message: string; user_id: string }>();
   },
 
   async verifyOTP(phone_number: string, otp: string): Promise<AuthResponse> {
@@ -80,7 +82,9 @@ export const api = {
     return apiClient.post('auth/login', { json: { username, password } }).json();
   },
 
-  async refreshToken(refresh_token: string): Promise<{ access_token: string; refresh_token: string }> {
+  async refreshToken(
+    refresh_token: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
     return apiClient.post('auth/refresh', { json: { refresh_token } }).json();
   },
 
@@ -111,7 +115,10 @@ export const api = {
   },
 
   // Messages
-  async getMessages(chatId: string, opts?: { limit?: number; offset?: number }): Promise<{ messages: Message[] }> {
+  async getMessages(
+    chatId: string,
+    opts?: { limit?: number; offset?: number },
+  ): Promise<{ messages: Message[] }> {
     return apiClient.get(`messages/${chatId}`, { searchParams: opts as any }).json();
   },
 

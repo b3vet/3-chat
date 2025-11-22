@@ -1,10 +1,10 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAtom, useSetAtom } from 'jotai';
-import { Settings, Bell, Palette, LogOut, ChevronRight } from 'lucide-react-native';
+import { Bell, ChevronRight, LogOut, Palette, Settings } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { userAtom, authTokenAtom } from '@/stores/userStore';
+import { authTokenAtom, userAtom } from '@/stores/userStore';
 
 export default function ProfileScreen() {
   const [user] = useAtom(userAtom);

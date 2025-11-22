@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import { Link, router } from 'expo-router';
-import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { Link, router } from 'expo-router';
 import { useSetAtom } from 'jotai';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { z } from 'zod';
 
 import { api } from '@/services/api';
 import { authTokenAtom, userAtom } from '@/stores/userStore';

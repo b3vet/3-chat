@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { MessageCircle, Users, User } from 'lucide-react-native';
+import { MessageCircle, User, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
