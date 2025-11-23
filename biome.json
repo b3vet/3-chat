@@ -5,6 +5,13 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false,
@@ -51,13 +58,11 @@
       }
     }
   },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": {
-          "level": "on"
-        }
-      }
-    }
+  "files": {
+    "includes": [
+      "apps/mobile/**/*.ts",
+      "apps/mobile/**/*.tsx",
+      "packages/**/*.ts"
+    ]
   }
 }

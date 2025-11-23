@@ -41,7 +41,7 @@ export default function ChatScreen() {
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
-      clearMessages();
+      clearMessages(id);
       const { messages: loadedMessages } = await api.getMessages(id);
       for (const msg of loadedMessages) {
         addMessage({ chatId: id, message: msg });

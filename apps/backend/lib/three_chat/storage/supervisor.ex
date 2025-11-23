@@ -16,7 +16,8 @@ defmodule ThreeChat.Storage.Supervisor do
       ThreeChat.Storage.Messages,
       ThreeChat.Storage.Groups,
       ThreeChat.Storage.Friendships,
-      ThreeChat.Storage.OTP
+      ThreeChat.Storage.OTP,
+      ThreeChat.Storage.Media
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

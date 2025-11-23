@@ -96,14 +96,11 @@ export const setTypingUserAtom = atom(
   },
 );
 
-// Clear messages for active chat
-export const clearChatMessagesAtom = atom(null, (get, set) => {
-  const chatId = get(activeChatIdAtom);
-  if (chatId) {
-    const messages = new Map(get(messagesAtom));
-    messages.delete(chatId);
-    set(messagesAtom, messages);
-  }
+// Clear messages for a specific chat
+export const clearChatMessagesAtom = atom(null, (get, set, chatId: string) => {
+  const messages = new Map(get(messagesAtom));
+  messages.delete(chatId);
+  set(messagesAtom, messages);
 });
 
 // Delete a message
@@ -134,7 +131,7 @@ export const upsertChatAtom = atom(null, (get, set, chat: Chat) => {
   }
 });
 
-// Update online status
+// Set user online status
 export const setUserOnlineAtom = atom(
   null,
   (get, set, { userId, isOnline }: { userId: string; isOnline: boolean }) => {
@@ -147,3 +144,28 @@ export const setUserOnlineAtom = atom(
     set(onlineUsersAtom, onlineUsers);
   },
 );
+
+// Add group
+export const addGroupAtom = atom(null, (get, set, group: Group) => {
+  const groups = get(groupsAtom);
+  set(groupsAtom, [...groups, group]);
+});
+
+// Update group
+export const updateGroupAtom = atom(
+  null,
+  (get, set, { groupId, updates }: { groupId: string; updates: Partial<Group> }) => {
+    const groups = get(groupsAtom);
+    const updatedGroups = groups.map((g) => (g.id === groupId ? { ...g, ...updates } : g));
+    set(groupsAtom, updatedGroups);
+  },
+);
+
+// Remove group
+export const removeGroupAtom = atom(null, (get, set, groupId: string) => {
+  const groups = get(groupsAtom);
+  set(
+    groupsAtom,
+    groups.filter((g) => g.id !== groupId),
+  );
+});
