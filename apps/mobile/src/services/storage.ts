@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import type { User } from './api';
 
 const AUTH_TOKEN_KEY = 'authToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
@@ -29,12 +30,12 @@ export const storage = {
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   },
 
-  async getUser(): Promise<any | null> {
+  async getUser(): Promise<User | null> {
     const userData = await SecureStore.getItemAsync(USER_KEY);
     return userData ? JSON.parse(userData) : null;
   },
 
-  async setUser(user: any): Promise<void> {
+  async setUser(user: User): Promise<void> {
     await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
   },
 

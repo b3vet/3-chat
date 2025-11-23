@@ -1,6 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
 import ky from 'ky';
 
+// React Native FormData file type
+interface ReactNativeFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 const apiClient = ky.create({
@@ -119,7 +126,10 @@ export const api = {
     chatId: string,
     opts?: { limit?: number; offset?: number },
   ): Promise<{ messages: Message[] }> {
-    return apiClient.get(`messages/${chatId}`, { searchParams: opts as any }).json();
+    const searchParams: Record<string, string> = {};
+    if (opts?.limit !== undefined) searchParams.limit = String(opts.limit);
+    if (opts?.offset !== undefined) searchParams.offset = String(opts.offset);
+    return apiClient.get(`messages/${chatId}`, { searchParams }).json();
   },
 
   async sendMessage(data: {
@@ -159,9 +169,10 @@ export const api = {
   },
 
   // Media
-  async uploadMedia(file: { uri: string; name: string; type: string }) {
+  async uploadMedia(file: ReactNativeFile) {
     const formData = new FormData();
-    formData.append('file', file as any);
+    // React Native FormData accepts file objects with uri, name, type
+    formData.append('file', file as unknown as Blob);
 
     return apiClient
       .post('media/upload', {
@@ -173,9 +184,10 @@ export const api = {
       .json<MediaUploadResponse>();
   },
 
-  async uploadVoiceNote(file: { uri: string; name: string; type: string }, duration?: number) {
+  async uploadVoiceNote(file: ReactNativeFile, duration?: number) {
     const formData = new FormData();
-    formData.append('file', file as any);
+    // React Native FormData accepts file objects with uri, name, type
+    formData.append('file', file as unknown as Blob);
     if (duration) {
       formData.append('duration', duration.toString());
     }
