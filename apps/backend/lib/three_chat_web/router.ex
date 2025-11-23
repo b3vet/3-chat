@@ -52,7 +52,11 @@ defmodule ThreeChatWeb.Router do
 
     # Media
     post "/media/upload", MediaController, :upload
+    post "/media/voice", MediaController, :upload_voice
     get "/media/:id", MediaController, :show
+    get "/media/:id/download", MediaController, :download
+    delete "/media/:id", MediaController, :delete
+    get "/media/rate-limit", MediaController, :rate_limit_status
   end
 
   # OpenAPI documentation
