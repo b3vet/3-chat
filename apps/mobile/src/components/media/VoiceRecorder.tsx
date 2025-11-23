@@ -260,9 +260,10 @@ export function VoiceRecorder({ onRecordingComplete, onCancel }: VoiceRecorderPr
             </Pressable>
 
             <View style={styles.waveformContainer}>
-              {[...Array(5)].map((_, i) => (
+              {/* Static waveform bars with predefined keys */}
+              {['bar-1', 'bar-2', 'bar-3', 'bar-4', 'bar-5'].map((key, i) => (
                 <Animated.View
-                  key={i}
+                  key={key}
                   style={[styles.waveformBar, waveformStyle, { opacity: 0.5 + i * 0.1 }]}
                 />
               ))}
