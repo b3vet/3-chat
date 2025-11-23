@@ -1,4 +1,4 @@
-import { BlurMask, Canvas, Circle, Group, LinearGradient, vec } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Circle, Group } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet } from 'react-native';
 import {

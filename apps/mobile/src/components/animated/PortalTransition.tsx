@@ -8,7 +8,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -206,7 +205,7 @@ interface ScreenTransitionProps {
 
 export function ScreenTransition({
   children,
-  transitionKey,
+  transitionKey: _transitionKey,
   type = 'portal',
 }: ScreenTransitionProps) {
   const isFirstRender = useRef(true);

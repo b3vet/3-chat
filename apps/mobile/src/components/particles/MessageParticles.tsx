@@ -1,16 +1,15 @@
-import { BlurMask, Canvas, Circle, Group, Path, Skia, vec } from '@shopify/react-native-skia';
-import { useCallback, useEffect, useMemo } from 'react';
+import { BlurMask, Canvas, Circle, Group } from '@shopify/react-native-skia';
+import { useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, {
+import {
   cancelAnimation,
   Easing,
   runOnJS,
-  useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withDelay,
+  withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 

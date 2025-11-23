@@ -26,8 +26,8 @@ export default function GroupsScreen() {
         groupsList.map((g) => ({
           id: g.id,
           name: g.name,
-          description: g.description,
-          iconUrl: g.icon_url,
+          description: g.description ?? undefined,
+          iconUrl: g.icon_url ?? undefined,
           creatorId: g.creator_id,
           memberCount: 1,
         })),

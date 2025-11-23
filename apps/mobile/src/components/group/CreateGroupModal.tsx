@@ -13,7 +13,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { api, type Group as ApiGroup } from '@/services/api';
+import Animated, { SlideInDown } from 'react-native-reanimated';
+import { type Group as ApiGroup, api } from '@/services/api';
 import { addGroupAtom } from '@/stores/chatStore';
 
 interface CreateGroupModalProps {
@@ -52,8 +53,8 @@ export function CreateGroupModal({ visible, onClose, onCreated }: CreateGroupMod
       addGroup({
         id: group.id,
         name: group.name,
-        description: group.description,
-        iconUrl: group.icon_url,
+        description: group.description ?? undefined,
+        iconUrl: group.icon_url ?? undefined,
         creatorId: group.creator_id,
         memberCount: 1,
       });

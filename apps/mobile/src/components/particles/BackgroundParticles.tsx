@@ -1,14 +1,4 @@
-import {
-  BlurMask,
-  Canvas,
-  Circle,
-  Group,
-  LinearGradient,
-  Path,
-  Rect,
-  Skia,
-  vec,
-} from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import {
@@ -213,7 +203,7 @@ interface StarFieldProps {
   config: typeof themeConfigs.space;
 }
 
-function StarField({ time, particles, config }: StarFieldProps) {
+function StarField({ time, particles, config: _config }: StarFieldProps) {
   return (
     <Group>
       {particles.map((star) => (

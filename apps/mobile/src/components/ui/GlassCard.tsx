@@ -219,7 +219,8 @@ export function GlassInputContainer({
     focusOpacity.value = withTiming(focused ? 1 : 0, { duration: 200 });
   }, [focused, focusOpacity]);
 
-  const borderOpacity = useDerivedValue(() => {
+  // Border opacity - can be used for dynamic border styling
+  const _borderOpacity = useDerivedValue(() => {
     return 0.2 + focusOpacity.value * 0.4;
   });
 
