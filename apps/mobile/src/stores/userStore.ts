@@ -1,22 +1,22 @@
 import * as SecureStore from 'expo-secure-store';
 import { atom } from 'jotai';
-import { atomWithStorage, createJSONStorage } from 'jotai/utils';
+import { atomWithStorage } from 'jotai/utils';
 
 import type { User } from '@/services/api';
 
-// Create secure storage for jotai
-const secureStorage = createJSONStorage<string>(() => ({
-  getItem: async (key: string) => {
+// Create secure storage for jotai (plain strings, no JSON serialization)
+const secureStorage = {
+  getItem: async (key: string): Promise<string> => {
     const value = await SecureStore.getItemAsync(key);
-    return value ?? null;
+    return value ?? '';
   },
-  setItem: async (key: string, value: string) => {
+  setItem: async (key: string, value: string): Promise<void> => {
     await SecureStore.setItemAsync(key, value);
   },
-  removeItem: async (key: string) => {
+  removeItem: async (key: string): Promise<void> => {
     await SecureStore.deleteItemAsync(key);
   },
-}));
+};
 
 // Auth token with secure storage persistence
 export const authTokenAtom = atomWithStorage<string>('authToken', '', secureStorage);

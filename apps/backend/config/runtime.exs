@@ -5,6 +5,13 @@ import Config
 # temporary load files are cleaned up.
 
 if config_env() == :prod do
+  # Configure production database
+  database_path = System.get_env("DATABASE_PATH") || "/var/data/three_chat.db"
+
+  config :three_chat, ThreeChat.Repo,
+    database: database_path,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """

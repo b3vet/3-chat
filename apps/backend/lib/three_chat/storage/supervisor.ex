@@ -11,13 +11,10 @@ defmodule ThreeChat.Storage.Supervisor do
 
   @impl true
   def init(_init_arg) do
+    # Only OTP storage remains in ETS as it's ephemeral and doesn't need persistence
+    # All other data is now stored in SQLite via Ecto
     children = [
-      ThreeChat.Storage.Users,
-      ThreeChat.Storage.Messages,
-      ThreeChat.Storage.Groups,
-      ThreeChat.Storage.Friendships,
-      ThreeChat.Storage.OTP,
-      ThreeChat.Storage.Media
+      ThreeChat.Storage.OTP
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

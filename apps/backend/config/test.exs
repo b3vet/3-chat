@@ -1,5 +1,11 @@
 import Config
 
+# Configure test database
+config :three_chat, ThreeChat.Repo,
+  database: Path.expand("../three_chat_test.db", __DIR__),
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 10
+
 # We don't run a server during test
 config :three_chat, ThreeChatWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],

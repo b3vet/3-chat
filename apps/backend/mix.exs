@@ -5,18 +5,19 @@ defmodule ThreeChat.MixProject do
     [
       app: :three_chat,
       version: "0.1.0",
-      elixir: "~> 1.17",
+      elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      listeners: [Phoenix.CodeReloader]
     ]
   end
 
   def application do
     [
       mod: {ThreeChat.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 
@@ -30,10 +31,12 @@ defmodule ThreeChat.MixProject do
       {:phoenix_live_view, "~> 1.1.17"},
       {:phoenix_live_dashboard, "~> 0.8.7"},
 
-      # Database & Storage (for future migration)
+      # Database & Storage
       {:ecto, "~> 3.13"},
       {:ecto_sql, "~> 3.13"},
-      {:postgrex, "~> 0.21"},
+      {:ecto_sqlite3, "~> 0.17"},
+      # Keep postgrex for future PostgreSQL migration
+      {:postgrex, "~> 0.21", optional: true},
 
       # Authentication & Security
       {:guardian, "~> 2.4"},
@@ -48,9 +51,8 @@ defmodule ThreeChat.MixProject do
       # File Handling
       {:waffle, "~> 1.1"},
 
-      # Rate Limiting
+      # Rate Limiting (ETS backend is built-in as of 6.x)
       {:hammer, "~> 6.2"},
-      {:hammer_backend_ets, "~> 0.5"},
 
       # Background Jobs
       {:oban, "~> 2.20"},

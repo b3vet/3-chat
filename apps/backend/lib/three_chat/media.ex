@@ -3,8 +3,10 @@ defmodule ThreeChat.Media do
   The Media context - handles file uploads and media management.
   """
 
+  import Ecto.Query
+  alias ThreeChat.Repo
+  alias ThreeChat.Schemas.Media, as: MediaSchema
   alias ThreeChat.Media.{Attachment, VoiceNote}
-  alias ThreeChat.Storage.Media, as: MediaStorage
 
   @doc """
   Upload a general attachment (image, video, audio, or document).
@@ -14,20 +16,23 @@ defmodule ThreeChat.Media do
 
     case Attachment.store({file, scope}) do
       {:ok, filename} ->
-        media_record = %{
-          id: UUID.uuid4(),
+        attrs = %{
           filename: filename,
           original_filename: file.filename,
           content_type: file.content_type,
-          file_type: Attachment.file_type(file.filename),
+          file_type: to_string(Attachment.file_type(file.filename)),
           user_id: user_id,
           url: Attachment.url({filename, scope}),
-          thumb_url: Attachment.url({filename, scope}, :thumb),
-          uploaded_at: DateTime.utc_now()
+          thumb_url: Attachment.url({filename, scope}, :thumb)
         }
 
-        {:ok, _} = MediaStorage.create(media_record)
-        {:ok, media_record}
+        %MediaSchema{}
+        |> MediaSchema.create_changeset(attrs)
+        |> Repo.insert()
+        |> case do
+          {:ok, media} -> {:ok, MediaSchema.to_map(media)}
+          {:error, _changeset} -> {:error, :create_failed}
+        end
 
       {:error, reason} ->
         {:error, reason}
@@ -42,20 +47,23 @@ defmodule ThreeChat.Media do
 
     case VoiceNote.store({file, scope}) do
       {:ok, filename} ->
-        media_record = %{
-          id: UUID.uuid4(),
+        attrs = %{
           filename: filename,
           original_filename: file.filename,
           content_type: file.content_type,
-          file_type: :voice_note,
+          file_type: "voice_note",
           user_id: user_id,
           url: VoiceNote.url({filename, scope}),
-          duration: duration_seconds,
-          uploaded_at: DateTime.utc_now()
+          duration: duration_seconds
         }
 
-        {:ok, _} = MediaStorage.create(media_record)
-        {:ok, media_record}
+        %MediaSchema{}
+        |> MediaSchema.create_changeset(attrs)
+        |> Repo.insert()
+        |> case do
+          {:ok, media} -> {:ok, MediaSchema.to_map(media)}
+          {:error, _changeset} -> {:error, :create_failed}
+        end
 
       {:error, reason} ->
         {:error, reason}
@@ -65,30 +73,43 @@ defmodule ThreeChat.Media do
   @doc """
   Get a media record by ID.
   """
-  def get_media(id), do: MediaStorage.get(id)
+  def get_media(id) do
+    case Repo.get(MediaSchema, id) do
+      nil -> {:error, :not_found}
+      media -> {:ok, MediaSchema.to_map(media)}
+    end
+  end
 
   @doc """
   Get all media uploaded by a user.
   """
-  def get_user_media(user_id), do: MediaStorage.get_by_user(user_id)
+  def get_user_media(user_id) do
+    from(m in MediaSchema,
+      where: m.user_id == ^user_id,
+      order_by: [desc: m.uploaded_at]
+    )
+    |> Repo.all()
+    |> Enum.map(&MediaSchema.to_map/1)
+  end
 
   @doc """
   Delete a media file and its record.
   """
   def delete_media(id, user_id) do
-    case MediaStorage.get(id) do
-      {:ok, media} ->
+    case Repo.get(MediaSchema, id) do
+      nil ->
+        {:error, :not_found}
+
+      media ->
         if media.user_id == user_id do
           # Delete file from storage
           scope = %{user_id: user_id}
           Attachment.delete({media.filename, scope})
-          MediaStorage.delete(id)
+          Repo.delete(media)
+          :ok
         else
           {:error, :unauthorized}
         end
-
-      error ->
-        error
     end
   end
 
@@ -98,6 +119,13 @@ defmodule ThreeChat.Media do
   """
   def cleanup_orphaned_files do
     cutoff = DateTime.utc_now() |> DateTime.add(-30 * 24 * 60 * 60, :second)
-    MediaStorage.delete_older_than(cutoff)
+
+    {count, _} =
+      from(m in MediaSchema,
+        where: m.uploaded_at < ^cutoff
+      )
+      |> Repo.delete_all()
+
+    {:ok, count}
   end
 end

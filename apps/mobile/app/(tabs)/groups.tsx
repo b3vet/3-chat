@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useAtom } from 'jotai';
 import { Plus, Users } from 'lucide-react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreateGroupModal } from '@/components/group';
+import { BackgroundParticles } from '@/components/particles/BackgroundParticles';
+import { NeonText } from '@/components/ui/NeonText';
 import { type Group as ApiGroup, api } from '@/services/api';
 import { type Group, groupsAtom } from '@/stores/chatStore';
 
@@ -18,7 +19,7 @@ export default function GroupsScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const loadGroups = useCallback(async () => {
+  const loadGroups = async () => {
     try {
       const response = (await api.getGroups()) as GroupsResponse;
       const groupsList = response.groups || [];
@@ -35,11 +36,11 @@ export default function GroupsScreen() {
     } catch (error) {
       console.error('Failed to load groups:', error);
     }
-  }, [setGroups]);
+  };
 
   useEffect(() => {
     loadGroups();
-  }, [loadGroups]);
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -51,42 +52,47 @@ export default function GroupsScreen() {
     router.push(`/group/${groupId}`);
   };
 
-  const renderGroup = ({ item, index }: { item: Group; index: number }) => (
-    <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
-      <Pressable style={styles.groupItem} onPress={() => router.push(`/group/${item.id}`)}>
-        <View style={styles.avatar}>
-          {item.iconUrl ? (
-            <Text style={styles.avatarText}>{item.name?.[0]?.toUpperCase() || 'G'}</Text>
-          ) : (
-            <Users size={24} color="#fff" />
-          )}
-        </View>
-        <View style={styles.groupInfo}>
-          <Text style={styles.groupName}>{item.name}</Text>
-          {item.description && (
-            <Text style={styles.description} numberOfLines={1}>
-              {item.description}
-            </Text>
-          )}
-          <Text style={styles.memberCount}>{item.memberCount || 1} members</Text>
-        </View>
-      </Pressable>
-    </Animated.View>
+  const renderGroup = ({ item }: { item: Group }) => (
+    <Pressable style={styles.groupItem} onPress={() => router.push(`/group/${item.id}`)}>
+      <View style={styles.avatar}>
+        {item.iconUrl ? (
+          <Text style={styles.avatarText}>{item.name?.[0]?.toUpperCase() || 'G'}</Text>
+        ) : (
+          <Users size={24} color="#fff" />
+        )}
+      </View>
+      <View style={styles.groupInfo}>
+        <Text style={styles.groupName}>{item.name}</Text>
+        {item.description && (
+          <Text style={styles.description} numberOfLines={1}>
+            {item.description}
+          </Text>
+        )}
+        <Text style={styles.memberCount}>{item.memberCount || 1} members</Text>
+      </View>
+    </Pressable>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <BackgroundParticles theme="aurora" intensity={0.6} />
       <View style={styles.header}>
-        <Text style={styles.title}>Groups</Text>
-        <Pressable style={styles.addButton} onPress={() => setIsModalVisible(true)}>
-          <Plus size={24} color="#fff" />
-        </Pressable>
+        <NeonText
+          fontSize={32}
+          fontWeight="bold"
+          color="#fff"
+          glowColor="#888"
+          animated
+          pulseSpeed={3000}
+        >
+          Groups
+        </NeonText>
       </View>
 
       {groups.length === 0 ? (
         <View style={styles.empty}>
           <View style={styles.emptyIcon}>
-            <Users size={48} color="#6366f1" />
+            <Users size={48} color="#888" />
           </View>
           <Text style={styles.emptyText}>No groups yet</Text>
           <Text style={styles.emptySubtext}>Create a group to chat with multiple friends!</Text>
@@ -102,11 +108,7 @@ export default function GroupsScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              tintColor="#6366f1"
-            />
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#888" />
           }
         />
       )}
@@ -126,25 +128,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#6366f1',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   list: {
     padding: 8,
@@ -161,7 +148,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -199,7 +186,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -219,7 +206,7 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#6366f1',
+    backgroundColor: '#333',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,

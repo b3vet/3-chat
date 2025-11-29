@@ -1,25 +1,22 @@
 import { Tabs } from 'expo-router';
-import { MessageCircle, User, Users } from 'lucide-react-native';
+import { MessageCircle, User, UserPlus, Users } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#000',
           borderTopColor: '#1a1a1a',
           borderTopWidth: 1,
-          height: 80,
-          paddingBottom: 20,
+          height: 70,
+          paddingBottom: 10,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: '#6366f1',
+        tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: '#666',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
       }}
     >
       <Tabs.Screen
@@ -27,6 +24,13 @@ export default function TabLayout() {
         options={{
           title: 'Chats',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: 'Friends',
+          tabBarIcon: ({ color, size }) => <UserPlus size={size} color={color} />,
         }}
       />
       <Tabs.Screen

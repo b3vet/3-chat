@@ -4,7 +4,7 @@ defmodule ThreeChatWeb.MediaController do
   alias ThreeChat.Media
   alias ThreeChat.RateLimiter
 
-  plug ThreeChatWeb.RateLimitPlug, type: :media_upload when action in [:upload, :upload_voice]
+  plug ThreeChatWeb.RateLimitPlug, [type: :media_upload] when action in [:upload, :upload_voice]
 
   def upload(conn, %{"file" => upload}) do
     user = Guardian.Plug.current_resource(conn)

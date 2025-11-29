@@ -3,7 +3,12 @@ defmodule ThreeChatWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-    plug :put_resp_header, "api-version", "1.0.0"
+    plug :api_version_header
+    plug OpenApiSpex.Plug.PutApiSpec, module: ThreeChatWeb.ApiSpec
+  end
+
+  defp api_version_header(conn, _opts) do
+    Plug.Conn.put_resp_header(conn, "api-version", "1.0.0")
   end
 
   pipeline :authenticated do
@@ -36,7 +41,14 @@ defmodule ThreeChatWeb.Router do
     # Friends
     post "/friends/add", FriendController, :add
     get "/friends", FriendController, :index
+    get "/friends/pending", FriendController, :pending
+    get "/friends/sent", FriendController, :sent
+    post "/friends/:id/accept", FriendController, :accept
+    post "/friends/:id/reject", FriendController, :reject
     delete "/friends/:id", FriendController, :delete
+
+    # Chats
+    get "/chats", ChatController, :index
 
     # Messages
     get "/messages/:chat_id", MessageController, :index

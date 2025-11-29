@@ -318,8 +318,8 @@ function FloatingParticle({ particle, time, blur }: FloatingParticleProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#000',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
   },
   canvas: {
     ...StyleSheet.absoluteFillObject,

@@ -12,7 +12,10 @@ defmodule ThreeChat.Application do
       # Phoenix PubSub
       {Phoenix.PubSub, name: ThreeChat.PubSub},
 
-      # In-memory storage supervisors
+      # Database Repo (SQLite)
+      ThreeChat.Repo,
+
+      # In-memory storage (only OTP for ephemeral codes)
       ThreeChat.Storage.Supervisor,
 
       # Presence tracking
@@ -22,6 +25,7 @@ defmodule ThreeChat.Application do
       {Hammer.Backend.ETS,
        [
          ets_table_name: :hammer_rate_limiter,
+         expiry_ms: 60_000 * 60 * 2,
          cleanup_interval_ms: 60_000 * 10
        ]},
 

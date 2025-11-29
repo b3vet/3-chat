@@ -3,6 +3,8 @@ import { useAtom, useSetAtom } from 'jotai';
 import { Bell, ChevronRight, LogOut, Palette, Settings } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BackgroundParticles } from '@/components/particles/BackgroundParticles';
+import { NeonText } from '@/components/ui/NeonText';
 
 import { authTokenAtom, userAtom } from '@/stores/userStore';
 
@@ -18,9 +20,19 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <BackgroundParticles theme="aurora" intensity={0.6} />
       <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+        <NeonText
+          fontSize={32}
+          fontWeight="bold"
+          color="#fff"
+          glowColor="#888"
+          animated
+          pulseSpeed={3000}
+        >
+          Profile
+        </NeonText>
       </View>
 
       <View style={styles.profileSection}>
@@ -39,7 +51,7 @@ export default function ProfileScreen() {
 
         <Pressable style={styles.menuItem}>
           <View style={styles.menuIcon}>
-            <Bell size={20} color="#6366f1" />
+            <Bell size={20} color="#888" />
           </View>
           <Text style={styles.menuText}>Notifications</Text>
           <ChevronRight size={20} color="#666" />
@@ -47,7 +59,7 @@ export default function ProfileScreen() {
 
         <Pressable style={styles.menuItem}>
           <View style={styles.menuIcon}>
-            <Palette size={20} color="#6366f1" />
+            <Palette size={20} color="#888" />
           </View>
           <Text style={styles.menuText}>Themes</Text>
           <ChevronRight size={20} color="#666" />
@@ -55,7 +67,7 @@ export default function ProfileScreen() {
 
         <Pressable style={styles.menuItem}>
           <View style={styles.menuIcon}>
-            <Settings size={20} color="#6366f1" />
+            <Settings size={20} color="#888" />
           </View>
           <Text style={styles.menuText}>Account Settings</Text>
           <ChevronRight size={20} color="#666" />
@@ -79,13 +91,9 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   profileSection: {
     alignItems: 'center',
@@ -97,7 +105,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -146,7 +154,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,

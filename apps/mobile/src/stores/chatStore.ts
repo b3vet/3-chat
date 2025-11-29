@@ -1,8 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { atom } from 'jotai';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import type { Message } from '@/services/api';
 
 export interface Chat {
   id: string;
+  recipientId?: string; // The other user's ID in a 1:1 chat
   name: string;
   avatarUrl?: string;
   lastMessage?: Message;
@@ -18,8 +21,11 @@ export interface Group {
   memberCount: number;
 }
 
-// Active chats list
-export const activeChatsAtom = atom<Chat[]>([]);
+// AsyncStorage adapter for jotai
+const asyncStorage = createJSONStorage<Chat[]>(() => AsyncStorage);
+
+// Active chats list (persisted)
+export const activeChatsAtom = atomWithStorage<Chat[]>('activeChats', [], asyncStorage);
 
 // Groups list
 export const groupsAtom = atom<Group[]>([]);
@@ -43,13 +49,14 @@ export const chatMessagesAtom = atom((get) => {
   return chatId ? messages.get(chatId) || [] : [];
 });
 
-// Add message to a chat
+// Add message to a chat (prepend for inverted list with descending order)
 export const addMessageAtom = atom(
   null,
   (get, set, { chatId, message }: { chatId: string; message: Message }) => {
     const messages = new Map(get(messagesAtom));
     const chatMessages = messages.get(chatId) || [];
-    messages.set(chatId, [...chatMessages, message]);
+    // Prepend new message since list is inverted and sorted descending (newest first)
+    messages.set(chatId, [message, ...chatMessages]);
     set(messagesAtom, messages);
   },
 );
@@ -103,6 +110,16 @@ export const clearChatMessagesAtom = atom(null, (get, set, chatId: string) => {
   set(messagesAtom, messages);
 });
 
+// Set all messages for a chat at once (for initial load)
+export const setMessagesAtom = atom(
+  null,
+  (get, set, { chatId, messages: newMessages }: { chatId: string; messages: Message[] }) => {
+    const allMessages = new Map(get(messagesAtom));
+    allMessages.set(chatId, newMessages);
+    set(messagesAtom, allMessages);
+  },
+);
+
 // Delete a message
 export const deleteMessageAtom = atom(
   null,
@@ -118,9 +135,9 @@ export const deleteMessageAtom = atom(
 );
 
 // Add or update a chat in the list
-export const upsertChatAtom = atom(null, (get, set, chat: Chat) => {
-  const chats = get(activeChatsAtom);
-  const existingIndex = chats.findIndex((c) => c.id === chat.id);
+export const upsertChatAtom = atom(null, async (get, set, chat: Chat) => {
+  const chats = await get(activeChatsAtom);
+  const existingIndex = chats.findIndex((c: Chat) => c.id === chat.id);
 
   if (existingIndex >= 0) {
     const updatedChats = [...chats];
@@ -130,6 +147,22 @@ export const upsertChatAtom = atom(null, (get, set, chat: Chat) => {
     set(activeChatsAtom, [chat, ...chats]);
   }
 });
+
+// Update a chat's lastMessage and move it to top of list
+export const updateChatLastMessageAtom = atom(
+  null,
+  async (get, set, { chatId, message }: { chatId: string; message: Message }) => {
+    const chats = await get(activeChatsAtom);
+    const existingIndex = chats.findIndex((c: Chat) => c.id === chatId);
+
+    if (existingIndex >= 0) {
+      const updatedChat = { ...chats[existingIndex], lastMessage: message };
+      // Remove from current position and add to top
+      const updatedChats = [updatedChat, ...chats.filter((_, i) => i !== existingIndex)];
+      set(activeChatsAtom, updatedChats);
+    }
+  },
+);
 
 // Set user online status
 export const setUserOnlineAtom = atom(

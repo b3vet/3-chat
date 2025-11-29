@@ -5,6 +5,7 @@ import Animated, {
   Easing,
   interpolate,
   runOnJS,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -170,8 +171,8 @@ export function PortalTransition({
 }
 
 interface PortalEffectProps {
-  portalScale: Animated.SharedValue<number>;
-  portalOpacity: Animated.SharedValue<number>;
+  portalScale: SharedValue<number>;
+  portalOpacity: SharedValue<number>;
   portalColor: string;
 }
 

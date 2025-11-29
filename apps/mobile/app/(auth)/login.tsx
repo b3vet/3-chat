@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useSetAtom } from 'jotai';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -41,8 +42,15 @@ export default function LoginScreen() {
 
     try {
       const response = await api.login(data.username, data.password);
+
+      // Manually save token to SecureStore to ensure it's persisted before navigation
+      await SecureStore.setItemAsync('authToken', response.access_token);
+      await SecureStore.setItemAsync('refreshToken', response.refresh_token);
+
+      // Update atoms after tokens are saved
       setAuthToken(response.access_token);
       setUser(response.user);
+
       router.replace('/(tabs)/chats');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

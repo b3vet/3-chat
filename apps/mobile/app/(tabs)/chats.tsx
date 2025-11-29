@@ -1,13 +1,57 @@
 import { format } from 'date-fns';
 import { router } from 'expo-router';
 import { useAtomValue } from 'jotai';
+import { MessageSquarePlus } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { StartConversationModal } from '@/components/chat/StartConversationModal';
+import { BackgroundParticles } from '@/components/particles/BackgroundParticles';
+import { NeonText } from '@/components/ui/NeonText';
+import hapticsService from '@/services/haptics';
+import soundService from '@/services/sound';
 import { activeChatsAtom, type Chat } from '@/stores/chatStore';
 
 export default function ChatsScreen() {
   const chats = useAtomValue(activeChatsAtom);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  // Floating Action Button animation
+  const fabScale = useSharedValue(1);
+
+  useEffect(() => {
+    fabScale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+  }, [fabScale]);
+
+  const fabStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fabScale.value }],
+  }));
+
+  const handleOpenModal = useCallback(() => {
+    hapticsService.light();
+    soundService.play('button_press');
+    setModalVisible(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+  }, []);
 
   const renderChat = ({ item }: { item: Chat }) => (
     <Pressable style={styles.chatItem} onPress={() => router.push(`/chat/${item.id}`)}>
@@ -36,15 +80,26 @@ export default function ChatsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <BackgroundParticles theme="aurora" intensity={0.6} />
+
       <View style={styles.header}>
-        <Text style={styles.title}>Chats</Text>
+        <NeonText
+          fontSize={32}
+          fontWeight="bold"
+          color="#fff"
+          glowColor="#888"
+          animated
+          pulseSpeed={3000}
+        >
+          Chats
+        </NeonText>
       </View>
 
       {chats.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>No conversations yet</Text>
-          <Text style={styles.emptySubtext}>Start chatting with your friends!</Text>
+          <Text style={styles.emptySubtext}>Tap the + button below to start a conversation!</Text>
         </View>
       ) : (
         <FlatList
@@ -54,6 +109,19 @@ export default function ChatsScreen() {
           contentContainerStyle={styles.list}
         />
       )}
+
+      {/* Floating Action Button */}
+      <Animated.View style={[styles.fab, fabStyle]}>
+        <Pressable
+          onPress={handleOpenModal}
+          style={({ pressed }) => [styles.fabButton, pressed && styles.fabButtonPressed]}
+        >
+          <MessageSquarePlus size={28} color="#fff" />
+        </Pressable>
+      </Animated.View>
+
+      {/* Start Conversation Modal */}
+      <StartConversationModal visible={modalVisible} onClose={handleCloseModal} />
     </SafeAreaView>
   );
 }
@@ -65,6 +133,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
@@ -87,7 +156,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#6366f1',
+    backgroundColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -120,7 +189,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   badge: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#333',
     borderRadius: 12,
     minWidth: 24,
     height: 24,
@@ -148,5 +217,29 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: '#888',
+  },
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  fabButtonPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.95 }],
   },
 });

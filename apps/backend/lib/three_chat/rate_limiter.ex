@@ -5,41 +5,33 @@ defmodule ThreeChat.RateLimiter do
   """
 
   @doc """
-  Check rate limit for message sending.
-  Limit: 100 messages per minute per user.
+  Check rate limit for a given type and identifier.
+
+  ## Rate limits by type:
+  - `:message` - 100 messages per minute per user
+  - `:media_upload` - 10 uploads per minute per user
+  - `:api_call` - 1000 calls per hour per user
+  - `:websocket` - 5 connection attempts per minute per user
+  - `:otp` - 3 OTP requests per 10 minutes per phone number
   """
+  def check_rate(type, identifier)
+
   def check_rate(:message, user_id) do
     Hammer.check_rate("message:#{user_id}", 60_000, 100)
   end
 
-  @doc """
-  Check rate limit for media uploads.
-  Limit: 10 uploads per minute per user.
-  """
   def check_rate(:media_upload, user_id) do
     Hammer.check_rate("media:#{user_id}", 60_000, 10)
   end
 
-  @doc """
-  Check rate limit for API calls.
-  Limit: 1000 calls per hour per user.
-  """
   def check_rate(:api_call, user_id) do
     Hammer.check_rate("api:#{user_id}", 3_600_000, 1000)
   end
 
-  @doc """
-  Check rate limit for WebSocket connections.
-  Limit: 5 connection attempts per minute per user.
-  """
   def check_rate(:websocket, user_id) do
     Hammer.check_rate("ws:#{user_id}", 60_000, 5)
   end
 
-  @doc """
-  Check rate limit for OTP requests.
-  Limit: 3 OTP requests per 10 minutes per phone number.
-  """
   def check_rate(:otp, phone_number) do
     Hammer.check_rate("otp:#{phone_number}", 600_000, 3)
   end

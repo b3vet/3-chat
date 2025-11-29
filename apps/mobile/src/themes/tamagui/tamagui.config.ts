@@ -154,7 +154,7 @@ const animations = createAnimations({
   },
 });
 
-export const tamaguiConfig = createTamagui({
+const tamaguiConfig = createTamagui({
   tokens,
   fonts: {
     heading: headingFont,
@@ -198,3 +198,6 @@ export type TamaguiConfig = typeof tamaguiConfig;
 declare module '@tamagui/core' {
   interface TamaguiCustomConfig extends TamaguiConfig {}
 }
+
+export default tamaguiConfig;
+export { tamaguiConfig };

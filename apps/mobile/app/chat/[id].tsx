@@ -10,9 +10,10 @@ import {
   activeChatIdAtom,
   addMessageAtom,
   chatMessagesAtom,
-  clearChatMessagesAtom,
+  setMessagesAtom,
   setTypingUserAtom,
   typingUsersAtom,
+  updateChatLastMessageAtom,
 } from '@/stores/chatStore';
 import { userIdAtom } from '@/stores/userStore';
 
@@ -25,7 +26,8 @@ export default function ChatScreen() {
   const [, setActiveChatId] = useAtom(activeChatIdAtom);
   const messages = useAtomValue(chatMessagesAtom);
   const addMessage = useSetAtom(addMessageAtom);
-  const clearMessages = useSetAtom(clearChatMessagesAtom);
+  const setMessages = useSetAtom(setMessagesAtom);
+  const updateChatLastMessage = useSetAtom(updateChatLastMessageAtom);
   const typingUsers = useAtomValue(typingUsersAtom);
   const setTypingUser = useSetAtom(setTypingUserAtom);
 
@@ -41,11 +43,9 @@ export default function ChatScreen() {
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
-      clearMessages(id);
       const { messages: loadedMessages } = await api.getMessages(id);
-      for (const msg of loadedMessages) {
-        addMessage({ chatId: id, message: msg });
-      }
+      // Set all messages at once - API returns newest first (descending), which is correct for inverted list
+      setMessages({ chatId: id, messages: loadedMessages });
 
       // Try to get chat info for title
       const otherUserId = getOtherUserId();
@@ -57,7 +57,7 @@ export default function ChatScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, addMessage, clearMessages, getOtherUserId]);
+  }, [id, setMessages, getOtherUserId]);
 
   useEffect(() => {
     setActiveChatId(id);
@@ -68,7 +68,10 @@ export default function ChatScreen() {
 
     // Listen for new messages
     const unsubMessage = phoenixService.onMessage('message:new', (payload) => {
-      addMessage({ chatId: id, message: payload as Message });
+      const newMessage = payload as Message;
+      addMessage({ chatId: id, message: newMessage });
+      // Update the chat's lastMessage in the chats list
+      updateChatLastMessage({ chatId: id, message: newMessage });
     });
 
     // Listen for typing
@@ -87,7 +90,7 @@ export default function ChatScreen() {
       phoenixService.leaveChannel(`chat:${id}`);
       setActiveChatId(null);
     };
-  }, [id, addMessage, setTypingUser, setActiveChatId, loadMessages]);
+  }, [id, addMessage, updateChatLastMessage, setTypingUser, setActiveChatId, loadMessages]);
 
   const handleSend = useCallback(
     (content: string) => {

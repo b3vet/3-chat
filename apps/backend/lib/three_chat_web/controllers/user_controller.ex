@@ -34,9 +34,11 @@ defmodule ThreeChatWeb.UserController do
   end
 
   def search(conn, %{"q" => query}) do
+    current_user = Guardian.Plug.current_resource(conn)
+
     users =
       query
-      |> Accounts.search_users()
+      |> Accounts.search_users(exclude_user_id: current_user.id)
       |> Enum.map(&format_user_public/1)
 
     conn

@@ -11,3 +11,4 @@ export {
   ScreenTransition,
   SharedElementTransition,
 } from './PortalTransition';
+export { NavigationEdgeEffect, ScreenEdgeGlow } from './ScreenEdgeGlow';

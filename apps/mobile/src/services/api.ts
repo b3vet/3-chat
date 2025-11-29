@@ -113,12 +113,39 @@ export const api = {
     return apiClient.get('friends').json();
   },
 
+  async getPendingRequests(): Promise<{ requests: (User & { requested_at: string })[] }> {
+    return apiClient.get('friends/pending').json();
+  },
+
+  async getSentRequests(): Promise<{ requests: (User & { requested_at: string })[] }> {
+    return apiClient.get('friends/sent').json();
+  },
+
   async addFriend(username: string) {
     return apiClient.post('friends/add', { json: { username } }).json();
   },
 
+  async acceptFriendRequest(id: string) {
+    return apiClient.post(`friends/${id}/accept`).json();
+  },
+
+  async rejectFriendRequest(id: string) {
+    return apiClient.post(`friends/${id}/reject`).json();
+  },
+
   async removeFriend(id: string) {
     return apiClient.delete(`friends/${id}`).json();
+  },
+
+  // Chats
+  async getChats(): Promise<{
+    chats: {
+      id: string;
+      recipient: { id: string; username: string; display_name: string; avatar_url: string | null };
+      last_message: Message;
+    }[];
+  }> {
+    return apiClient.get('chats').json();
   },
 
   // Messages

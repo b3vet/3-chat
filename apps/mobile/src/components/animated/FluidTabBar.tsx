@@ -3,6 +3,7 @@ import { BlurMask, Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { useCallback, useEffect } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
+  type SharedValue,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -133,7 +134,7 @@ export function FluidTabBar({
 
 interface AnimatedTabIconProps {
   index: number;
-  activeIndex: Animated.SharedValue<number>;
+  activeIndex: SharedValue<number>;
   isFocused: boolean;
   tabIcon?: (props: { focused: boolean; color: string; size: number }) => React.ReactNode;
   primaryColor: string;
